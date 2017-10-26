@@ -1,11 +1,13 @@
 #include "RoboClaw.h"
 #include <SoftwareSerial.h>
 
+//declare motor controllers
 RoboClaw roboclawOmni(&Serial1, 10000);
 RoboClaw roboclawMcCanum(&Serial2, 10000);
 
 #define address 0x80
 
+//init variables
 int vertical = A0;
 int horizontal = A1;
 int verticalSensor = 0;
@@ -16,27 +18,27 @@ int left = 0;
 
 void setup()
 {
+  //init comms with motor controllers
   roboclawOmni.begin(38400);
   roboclawMcCanum.begin(38400);
 
+  //currently using analog joysticks as inputs
   pinMode(vertical, INPUT);
   pinMode(horizontal, INPUT);
+  
   Serial.begin(57600);
 }
 
 void loop()
 {
+  //read joystick inputs
   verticalSensor = analogRead(vertical);
   horizontalSensor = analogRead(horizontal);
 
+  //map joystick values to motor controller values
   right = map(verticalSensor, 0, 1022, -127, 127);
   left = map(horizontalSensor, 0, 1022, -127, 127);
 
-  //Both in dead
-  //right in dead
-  //left in dead
-  //both high
-  //both low
   if (left < 10 && left > -10)
   {
     //if movement can be just forwards backwards
@@ -73,8 +75,6 @@ void loop()
       roboclawOmni.ForwardM1(address, 0);
     }
   }
-
-
 
   Serial.println(right);
   Serial.println(verticalSensor);

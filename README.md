@@ -8,11 +8,11 @@ Code for the robot will be in robot_drive, and code for the controller will be i
 
 We are using the following libraries in this code
 
-*Ionmotion roboclaw libraries for arduino
-*http://www.ionmc.com/downloads
+* Ionmotion roboclaw libraries for arduino
+* http://www.ionmc.com/downloads
 
-*MatrixMath libraries for arduino
-*https://playground.arduino.cc/Code/MatrixMath
+* MatrixMath libraries for arduino
+* https://playground.arduino.cc/Code/MatrixMath
 
 ## Additional notes:
 

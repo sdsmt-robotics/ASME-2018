@@ -1,4 +1,4 @@
-# ACME-2018
+# ASME-2018
 
 The repository for the SD Mines Robotics Team ASME Robot Design Competition robot and controller code.
 

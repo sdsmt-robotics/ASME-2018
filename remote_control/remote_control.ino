@@ -93,7 +93,7 @@ void loop() {
    button2p = false; 
   }
 
-  if (button3 == HIGH && button4p == false)
+  if (button3 == HIGH && button3p == false)
   {
       Serial.write('G');
       Serial.write('X');

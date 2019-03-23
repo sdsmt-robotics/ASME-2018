@@ -48,6 +48,8 @@ void check_command()
 }
 
 int drive;
+long right_drive;
+long left_drive;
 
 //houses the code for driving the robot
 void drive_bot()
@@ -61,27 +63,60 @@ void drive_bot()
     {
       analogWrite(solenoid_pin, 0); //retract solenoid
     }*/
-  
-     if(current_vals[1] > 0) //left motors
+    //right_drive = current_vals[0] * current_vals[0];
+    //left_drive = current_vals[1] * current_vals[1];
+    /*
+    //current_vals[1] -= 30;
+    if((current_vals[0] < 30 && current_vals[0] > 0) || (current_vals[0] > -20 && current_vals[0] <0))
+    {
+      //right_drive *= -1;
+      current_vals[0] = current_vals[0] / 2;
+    }
+    if((current_vals[1] < 30 && current_vals[1] > 0  )|| (current_vals[1] > -20 && current_vals[1] <0))    {
+      //right_drive *= -1;
+      current_vals[1] = current_vals[1] / 2;
+    }
+    */
+    //current_vals[0] = right_drive / 120;
+    //current_vals[1] = left_drive / 120;
+
+    //current_vals[0] = constrain(current_vals[0], -127, 127);
+    //current_vals[1] = constrain(current_vals[1], -127, 127);
+    
+
+    Serial.println(current_vals[0]);
+    Serial.println(current_vals[1]);
+    Serial.println();
+     if(current_vals[1] > 7) //left motors
      {
       BackMotors.BackwardM1(address, current_vals[1]);
       BackMotors.BackwardM2(address, current_vals[1]);
      }
-    else
-    {
+     else if(current_vals[1] < -7) //left motors
+     {
       BackMotors.ForwardM1(address, abs(current_vals[1]));
       BackMotors.ForwardM2(address, abs(current_vals[1]));
+     }
+    else 
+    {
+      BackMotors.ForwardM1(address, 0);
+      BackMotors.ForwardM2(address, 0);
     }
     
-    if(current_vals[0] > 0) //right motors
+    if(current_vals[0] > 7) //right motors
     {
       FrontMotors.BackwardM1(address, current_vals[0]);
       FrontMotors.ForwardM2(address, current_vals[0]);
     }
-    else
+    else if(current_vals[0] < -7)
     {
       FrontMotors.ForwardM1(address, abs(current_vals[0]));
       FrontMotors.BackwardM2(address, abs(current_vals[0]));
+    }
+    else
+    {
+      FrontMotors.ForwardM1(address, 0);
+      FrontMotors.BackwardM2(address, 0);
     }
 }
 
@@ -118,9 +153,9 @@ void loop() {
     incomingByte = Serial1.read();
     if (incomingByte == 0x58)
     {
-      Serial.print("RECEIVED ");
-      Serial.print(incoming_command[0]);
-      Serial.println();
+      //Serial.print("RECEIVED ");
+      //Serial.print(incoming_command[0]);
+      //Serial.println();
       check_command();
       drive_bot();
       queue_len = 0;

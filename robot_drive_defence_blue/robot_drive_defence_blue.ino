@@ -47,7 +47,8 @@ void check_command()
     Serial.println(current_vals[4]);*/
   }
 }
-
+long right_drive;
+long left_drive;
 //houses the code for driving the robot
 void drive_bot()
 {
@@ -55,23 +56,53 @@ void drive_bot()
   FrontMotors.write(127+current_vals[0]);
   FrontMotors.write(127-current_vals[1]);
   */
-    if(current_vals[0] > 40) //deadzone of +/- 10
-      FrontMotors.ForwardM2(address, current_vals[0]);
-    else if (current_vals[0] < -40)
-      FrontMotors.BackwardM2(address, abs(current_vals[0]));
-    else if (abs(current_vals[0]) <= 40)
-      FrontMotors.ForwardM2(address, 0);
+    /*
+    right_drive = pow(current_vals[0], 2);
+    left_drive = pow(current_vals[1], 2);
+
+    if(current_vals[0] <0)
+    {
+      right_drive *= -1;
+    }
+    if(current_vals[1] <0)
+    {
+      left_drive *= -1;
+    }
     
+    current_vals[0] = right_drive / 120;
+    current_vals[1] = left_drive / 120;
+
+    current_vals[0] = constrain(current_vals[0], -127, 127);
+    current_vals[1] = constrain(current_vals[1], -127, 127);
+    */
+    if(current_vals[0] > 30) //deadzone of +/- 30
+	{
+      FrontMotors.ForwardM2(address, current_vals[0]);
+    }
+	else if (current_vals[0] < -30)
+	{
+      FrontMotors.BackwardM2(address, abs(current_vals[0]));
+    }
+	else
+	{
+      FrontMotors.ForwardM2(address, 0);
+    }
     /*if(current_vals[1] > 0)
       FrontMotors.ForwardM1(address, current_vals[1]);
     else FrontMotors.BackwardM1(address, abs(current_vals[1]));*/
 
-    if(current_vals[1] > 40)
+    if(current_vals[1] > 30)
+	{
       FrontMotors.BackwardM1(address, current_vals[1]);
-    else if (current_vals[1] < -40)
+	}
+    else if (current_vals[1] < -30)
+	{
       FrontMotors.ForwardM1(address, abs(current_vals[1]));
-    else if (abs(current_vals[1]) <= 40)
+	}
+    else
+	{
       FrontMotors.ForwardM1(address, 0);
+	}
 
     if (current_vals[4] == 1)
     {

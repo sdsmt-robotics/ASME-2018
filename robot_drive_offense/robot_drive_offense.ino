@@ -1,16 +1,28 @@
 #include "RoboClaw.h"
 #include <SoftwareSerial.h>
+#include <PololuMaestro.h>
 
 #define address 0x80
+
+#define stp 22
+#define dir 24
+#define MS1 26
+#define MS2 28
+#define EN  30
 
 RoboClaw FrontMotors(&Serial2, 10000);
 RoboClaw BackMotors(&Serial3, 10000);
 
-SoftwareSerial smcSerial1 = SoftwareSerial(3, 4);
-SoftwareSerial smcSerial2 = SoftwareSerial(5, 6);
+SoftwareSerial smcSerial1 = SoftwareSerial(4, 5);
+SoftwareSerial smcSerial2 = SoftwareSerial(7, 6);
+
+SoftwareSerial maestroSerial(10, 11);
+
+MicroMaestro maestro(maestroSerial);
 
 //Recieving byte
 byte incomingByte = 0;
+bool shooting = false;
 
 //Storage for bytes for decoding
 byte incoming_command[2];
@@ -23,6 +35,10 @@ int current_vals[12];
 
 int axis = 0;
 
+bool stage2 = true;
+bool stage3 = false;
+
+bool stepper = false;
 // required to allow motors to move
 // must be called when controller restarts and after any error
 void exitSafeStart()
@@ -66,15 +82,106 @@ void check_command()
     Serial.print(map(incoming_command[1], 0, 200, -127, 127));
     Serial.println();
   }
-  else if (incoming_command[0] == 70)
+  else if (incoming_command[0] == 69)
   {
     Serial.println("Stopping Shooter");
     setMotorSpeed(0);
+    shooting = false;
   }
-  else if (incoming_command[0] == 71)
+  else if (incoming_command[0] == 70)
   {
     Serial.println("Starting Shooter");
-    setMotorSpeed(800);
+    //max
+    setMotorSpeed(700);
+    delay(20);
+    setMotorSpeed(510);
+    shooting = true;
+  }
+    else if (incoming_command[0] == 71)
+  {
+    //low
+    Serial.println("Starting Shooter");
+    setMotorSpeed(700);
+    delay(20);
+    setMotorSpeed(350);
+    shooting = true;
+  }
+    else if (incoming_command[0] == 72)
+  {
+    //mid
+    Serial.println("Starting Shooter");
+    setMotorSpeed(700);
+    delay(20);
+    setMotorSpeed(420-10);
+    shooting = true;
+  }
+  else if (incoming_command[0] == 73)
+  {
+    if(!stepper)
+    {
+      //forward
+      digitalWrite(EN, LOW); //Pull enable pin low to allow motor control
+      stepper = true;
+    }
+    else if(stepper)
+    {
+         stepper = false;
+   resetEDPins(); 
+    }
+    else
+    {
+      stepper = false;
+      resetEDPins(); 
+    }
+  }
+  else if (incoming_command[0] == 74)
+  {
+	Serial.println("Starting Shooter Max Speed");
+	
+	for(int i = 1; i < 32; i++)
+	{
+		setMotorSpeed(100 * i);
+    Serial.println(100*i);
+		delay(200);
+	}
+    setMotorSpeed(3200);
+    shooting = true;
+  }
+  else if (incoming_command[0] == 75)
+  {
+    if(stage2)
+    {
+      //medium
+      maestro.setTarget(0, 6000);
+      maestro.setTarget(1, 5960);
+      stage2 = false;
+      stage3 = true;
+    }
+    else if(stage3)
+    {
+      //closed
+      maestro.setTarget(0, 8100);
+      maestro.setTarget(1, 3600);
+      stage3 = false;
+      stage2 = true;
+    }
+    else
+    {
+      //fail-back to open
+      maestro.setTarget(0, 9800);
+      maestro.setTarget(1, 3968);
+      stage2 = false;
+      stage3 = false;
+    }
+  }
+    else if (incoming_command[0] == 76)
+  {
+    //ehhh
+    Serial.println("Starting Shooter");
+    setMotorSpeed(700);
+    delay(20);
+    setMotorSpeed(300);
+    shooting = true;
   }
   else
   {
@@ -97,25 +204,84 @@ int NEUTRAL = 0;
 //houses the code for driving the robot
 void drive_bot()
 {
-	
+  if(stepper)
+  {
+    current_vals[1] = 0;
+    current_vals[3] = 0;
+    current_vals[2] = current_vals[2] / 2;
+  }
+  
+  front_right = current_vals[1] + current_vals[2] + current_vals[3];
+  rear_right  = current_vals[1] + current_vals[2] - current_vals[3];
+  front_left  = current_vals[1] - current_vals[2] - current_vals[3];
+  rear_left   = current_vals[1] - current_vals[2] + current_vals[3];
+  
+  front_right = constrain(front_right, -127, 127);
+  rear_right  = constrain(rear_right, -127, 127);
+  front_left  = constrain(front_left, -127, 127);
+  rear_left   = constrain(rear_left, -127, 127);
+  
   // Determines direction and speed of each motor
-    if(front_left > 0)
-      FrontMotors.ForwardM1(address, front_left);
-    else FrontMotors.BackwardM1(address, abs(front_left));
+    if(front_left > 5)
+    {
+      FrontMotors.BackwardM1(address, front_left);
+    }
+    else if(front_left < 5)
+    {
+      FrontMotors.ForwardM1(address, abs(front_left));
+    }
+    else
+    {
+      FrontMotors.ForwardM1(address, 0);
+    }
 
-    if(front_right > 0)
-      FrontMotors.ForwardM2(address, front_right);
-    else FrontMotors.BackwardM2(address, abs(front_right));
+    if(front_right > 5)
+      {
+        BackMotors.ForwardM2(address, front_right);
+      }
+    else if(front_right < 5)
+    {
+      BackMotors.BackwardM2(address, abs(front_right));
+    }
+    else
+    {
+      BackMotors.ForwardM2(address, 0);
+    }
 
-    if(rear_left > 0)
-      BackMotors.ForwardM1(address, rear_left);
-    else BackMotors.BackwardM1(address, abs(rear_left));
+    if(rear_left > 5)
+    {
+      FrontMotors.BackwardM2(address, rear_left);
+    }
+    else if(rear_left < 5)
+    {
+      FrontMotors.ForwardM2(address, abs(rear_left));
+    }
+    else 
+    {
+      FrontMotors.ForwardM2(address, 0);
+    }
 
-    if(rear_right > 0)
-      BackMotors.ForwardM2(address, rear_right);
-    else BackMotors.BackwardM2(address, abs(rear_right));
+    if(rear_right > 5)
+    {
+      BackMotors.BackwardM1(address, rear_right);
+    }
+    else if(rear_right < 5)
+    {
+      BackMotors.ForwardM1(address, abs(rear_right));
+    }
+    else
+    {
+      BackMotors.ForwardM1(address, 0);
+    }
 }
 void setup() {
+  pinMode(stp, OUTPUT);
+  pinMode(dir, OUTPUT);
+  pinMode(MS1, OUTPUT);
+  pinMode(MS2, OUTPUT);
+  pinMode(EN, OUTPUT);
+  resetEDPins(); //Set step, direction, microstep and enable pins to default states
+  
   Serial1.begin(9600);
   Serial.begin(9600);
 
@@ -126,15 +292,29 @@ void setup() {
     // initialize software serial object with baud rate of 19.2 kbps
   smcSerial1.begin(19200);
   smcSerial2.begin(19200);
+
+  maestroSerial.begin(9600);
   
-   delay(5);
+  delay(5);
    
-     smcSerial1.write(0xAA);  // send baud-indicator byte
+  smcSerial1.write(0xAA);  // send baud-indicator byte
   smcSerial2.write(0xAA);  // send baud-indicator byte
   
   exitSafeStart();  // clear the safe-start violation and let the motor run
-  
+
+  maestro.setTarget(0, 3968);
+  maestro.setTarget(1, 8000);
   Serial.println("Starting Recieve Code");
+}
+
+//Reset Easy Driver pins to default states
+void resetEDPins()
+{
+  digitalWrite(stp, LOW);
+  digitalWrite(dir, LOW);
+  digitalWrite(MS1, LOW);
+  digitalWrite(MS2, LOW);
+  digitalWrite(EN, HIGH);
 }
 
 void loop() {
@@ -161,6 +341,12 @@ void loop() {
     }
     //Serial.println(incomingByte, HEX);
   }
-
+  if(stepper)
+  {
+    digitalWrite(stp,HIGH); //Trigger one step forward
+    delay(1);
+    digitalWrite(stp,LOW); //Pull step pin low so it can be triggered again
+    delay(1);
+  }
 }
 

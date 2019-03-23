@@ -1,5 +1,8 @@
 #include <SoftwareSerial.h>
-  
+
+//variables for controls storage
+
+//joystick
 int joy_1a = 0;
 int joy_1b = 0;
 int joy_1a_old = 0;
@@ -16,6 +19,7 @@ char map_1b = 0;
 char map_2a = 0;
 char map_2b = 0;
 
+//buttons
 int button1;
 bool button1p;
 
@@ -41,10 +45,10 @@ int button8;
 bool button8p;
 
 void setup() {
-  pinMode(A0, INPUT);     // sets A0 to input
-  pinMode(A1, INPUT);     // sets A1 to input
-  pinMode(A2, INPUT);     // sets A2 to input
-  pinMode(A3, INPUT);     // sets A3 to input
+  pinMode(A0, INPUT); //joystick
+  pinMode(A1, INPUT); //joystick
+  pinMode(A2, INPUT); //joystick
+  pinMode(A3, INPUT); //joystick
   
   pinMode(4, INPUT);
   pinMode(5, INPUT);
@@ -61,15 +65,15 @@ void setup() {
 }
 
 void loop() {
-  button1 = digitalRead(6);
-  button2 = digitalRead(2);
-  button3 = digitalRead(A5);
-  button4 = digitalRead(3);
+  button1 = digitalRead(6);		//left - left
+  button2 = digitalRead(2);		//left - up
+  button3 = digitalRead(A5);	//left - down
+  button4 = digitalRead(3);		//left - right
 
-  button5 = digitalRead(7);
-  button6 = digitalRead(5);
-  button7 = digitalRead(A4);
-  button8 = digitalRead(4);
+  button5 = digitalRead(7);		//right - left
+  button6 = digitalRead(5);		//right - up
+  button7 = digitalRead(A4);	//right - down
+  button8 = digitalRead(4);		//right - right
   
   if (button1 == HIGH && button1p == false)
   {
@@ -159,13 +163,15 @@ void loop() {
    button8p = false; 
   }
   
-  joy_1a = analogRead(A0);      // gets the joystick output for the vertical value 
+  //read joystick values
+  joy_1a = analogRead(A0); 
   joy_1b = analogRead(A1);
   joy_2a = analogRead(A2);
   joy_2b = analogRead(A3);
 
-  map_1a = map(joy_1a, 0, 1024, 0, 200);
-  if (abs(joy_1a - joy_1a_old) > 10) //value has changed by 10
+  
+  map_1a = map(joy_1a, 0, 1024, 0, 254);
+  if (abs(joy_1a - joy_1a_old) > 5) //value has changed by 10
   {
     Serial.write('a');
     Serial.write(map_1a);
@@ -173,8 +179,8 @@ void loop() {
     joy_1a_old = joy_1a;
   }
   
-  map_1b = map(joy_1b, 0, 1024, 0, 200);
-  if (abs(joy_1b - joy_1b_old) > 10)
+  map_1b = map(joy_1b, 0, 1024, 0, 254);
+  if (abs(joy_1b - joy_1b_old) > 5)
   {
     Serial.write('b');
     Serial.write(map_1b);
@@ -182,8 +188,8 @@ void loop() {
     joy_1b_old = joy_1b;
   }
   
-  map_2a = map(joy_2a, 0, 1024, 0, 200);
-  if (abs(joy_2a - joy_2a_old) > 10)
+  map_2a = map(joy_2a, 0, 1024, 0, 254);
+  if (abs(joy_2a - joy_2a_old) > 5)
   {
     Serial.write('c');
     Serial.write(map_2a);
@@ -191,8 +197,8 @@ void loop() {
     joy_2a_old = joy_2a;
   }
 
-  map_2b = map(joy_2b, 0, 1024, 0, 200);
-  if (abs(joy_2b - joy_2b_old) > 10)
+  map_2b = map(joy_2b, 0, 1024, 0, 254);
+  if (abs(joy_2b - joy_2b_old) > 5)
   {
     Serial.write('d');
     Serial.write(map_2b);
@@ -201,9 +207,7 @@ void loop() {
   }
   
   
-  //delay(20);
   delay(50);
-  //delay(1000);
 }
 
 

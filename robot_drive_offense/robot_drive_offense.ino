@@ -136,14 +136,14 @@ void check_command()
   }
   else if (incoming_command[0] == 74)
   {
-	Serial.println("Starting Shooter Max Speed");
-	
-	for(int i = 1; i < 32; i++)
-	{
-		setMotorSpeed(100 * i);
+  Serial.println("Starting Shooter Max Speed");
+  
+  for(int i = 1; i < 32; i++)
+  {
+    setMotorSpeed(100 * i);
     Serial.println(100*i);
-		delay(200);
-	}
+    delay(200);
+  }
     setMotorSpeed(3200);
     shooting = true;
   }
@@ -221,57 +221,60 @@ void drive_bot()
   front_left  = constrain(front_left, -127, 127);
   rear_left   = constrain(rear_left, -127, 127);
   
+  
   // Determines direction and speed of each motor
     if(front_left > 5)
     {
-      FrontMotors.BackwardM1(address, front_left);
+      FrontMotors.ForwardM1(address, front_left);
     }
     else if(front_left < 5)
     {
-      FrontMotors.ForwardM1(address, abs(front_left));
+      FrontMotors.BackwardM1(address, abs(front_left));
     }
     else
-    {
-      FrontMotors.ForwardM1(address, 0);
-    }
-
-    if(front_right > 5)
-      {
-        BackMotors.ForwardM2(address, front_right);
-      }
-    else if(front_right < 5)
-    {
-      BackMotors.BackwardM2(address, abs(front_right));
-    }
-    else
-    {
-      BackMotors.ForwardM2(address, 0);
-    }
-
-    if(rear_left > 5)
-    {
-      FrontMotors.BackwardM2(address, rear_left);
-    }
-    else if(rear_left < 5)
-    {
-      FrontMotors.ForwardM2(address, abs(rear_left));
-    }
-    else 
     {
       FrontMotors.ForwardM2(address, 0);
     }
 
-    if(rear_right > 5)
+    if(front_right > 5)
+      {
+        FrontMotors.BackwardM2(address, front_right);
+      }
+    else if(front_right < 5)
     {
-      BackMotors.BackwardM1(address, rear_right);
-    }
-    else if(rear_right < 5)
-    {
-      BackMotors.ForwardM1(address, abs(rear_right));
+      FrontMotors.ForwardM2(address, abs(front_right));
     }
     else
     {
+      FrontMotors.ForwardM2(address, 0);
+    }
+
+    if(rear_left > 5)
+    {
+      BackMotors.ForwardM1(address, rear_left);
+  Serial.println("rear_left: " + String(rear_left));
+    }
+    else if(rear_left < 5)
+    {
+      BackMotors.BackwardM1(address, abs(rear_left));
+  Serial.println("rear_left: " + String(rear_left));
+    }
+    else 
+    {
       BackMotors.ForwardM1(address, 0);
+    }
+
+    if(rear_right > 5)
+    {
+      BackMotors.BackwardM2(address, rear_right);
+    }
+    else if(rear_right < 5)
+    {
+      BackMotors.ForwardM2(address, abs(rear_right));
+    }
+    else
+    {
+      BackMotors.ForwardM2(address, 0);
     }
 }
 void setup() {
@@ -349,4 +352,3 @@ void loop() {
     delay(1);
   }
 }
-

@@ -1,9 +1,20 @@
-#include "RoboClaw.h"
+//#include "RoboClaw.h"
+#include "L289N.h"
 
 #define address 0x80
 
-RoboClaw FrontMotors(&Serial2, 10000); //right motors
-RoboClaw BackMotors(&Serial3, 10000);
+int solenoid_pin = 44; //pin the h-bridge/solenoid is on
+const int JOY_THRESH = 15;  //dead zone for the joystick
+
+//RoboClaw FrontMotors(&Serial2, 10000); //right motors
+//RoboClaw BackMotors(&Serial3, 10000);
+
+//Set up motor controllers
+L289N frontLeftMotor(2, 3, 4, true); //setup a motor object with pins 2 and 3 controlling direction and 4 controlling speed
+L289N backLeftMotor(5, 6, 7, true);
+L289N frontRightMotor(8, 9, 10);
+L289N backRightMotor(11, 12, 13);
+
 
 //Recieving byte
 byte incomingByte = 0;
@@ -17,12 +28,10 @@ int queue_len = 0;
 //101-108 are button values
 int current_vals[12];
 
-//pin the h-bridge/solenoid is on
-int solenoid_pin = 3;
-
 long int old_time = 0;
 
 int axis = 0;
+
 //Distinguishes from button / joystick commands
 void check_command()
 {
@@ -44,91 +53,63 @@ void check_command()
     current_vals[4] = 1; //fire solenoid
   }
 
-  Serial.println(current_vals[4]);
+  //Serial.println(current_vals[4]);
 }
-
-int drive;
-long right_drive;
-long left_drive;
 
 //houses the code for driving the robot
 void drive_bot()
 {
+  //kicker
     if (current_vals[4] == 1)
     {
       old_time = millis();
       analogWrite(solenoid_pin, 200); //fire solenoid
     }
-    /*else
-    {
-      analogWrite(solenoid_pin, 0); //retract solenoid
-    }*/
-    //right_drive = current_vals[0] * current_vals[0];
-    //left_drive = current_vals[1] * current_vals[1];
-    /*
-    //current_vals[1] -= 30;
-    if((current_vals[0] < 30 && current_vals[0] > 0) || (current_vals[0] > -20 && current_vals[0] <0))
-    {
-      //right_drive *= -1;
-      current_vals[0] = current_vals[0] / 2;
-    }
-    if((current_vals[1] < 30 && current_vals[1] > 0  )|| (current_vals[1] > -20 && current_vals[1] <0))    {
-      //right_drive *= -1;
-      current_vals[1] = current_vals[1] / 2;
-    }
-    */
-    //current_vals[0] = right_drive / 120;
-    //current_vals[1] = left_drive / 120;
-
-    //current_vals[0] = constrain(current_vals[0], -127, 127);
-    //current_vals[1] = constrain(current_vals[1], -127, 127);
     
-
+    //Print Joystick vals
     Serial.println(current_vals[0]);
     Serial.println(current_vals[1]);
     Serial.println();
-     if(current_vals[1] > 7) //left motors
-     {
-      BackMotors.BackwardM1(address, current_vals[1]);
-      BackMotors.BackwardM2(address, current_vals[1]);
-     }
-     else if(current_vals[1] < -7) //left motors
-     {
-      BackMotors.ForwardM1(address, abs(current_vals[1]));
-      BackMotors.ForwardM2(address, abs(current_vals[1]));
+
+    //Drive motors
+    if(abs(current_vals[1]) > JOY_THRESH) //left motors
+    {
+      frontLeftMotor.setSpeedDirection(current_vals[1] * 2);
+      backLeftMotor.setSpeedDirection(current_vals[1] * 2);
      }
     else 
     {
-      BackMotors.ForwardM1(address, 0);
-      BackMotors.ForwardM2(address, 0);
+      frontLeftMotor.setSpeedDirection(0);
+      backLeftMotor.setSpeedDirection(0);
     }
     
-    if(current_vals[0] > 7) //right motors
+    if(abs(current_vals[0]) > JOY_THRESH) //right motors
     {
-      FrontMotors.BackwardM1(address, current_vals[0]);
-      FrontMotors.ForwardM2(address, current_vals[0]);
-    }
-    else if(current_vals[0] < -7)
-    {
-      FrontMotors.ForwardM1(address, abs(current_vals[0]));
-      FrontMotors.BackwardM2(address, abs(current_vals[0]));
+      frontRightMotor.setSpeedDirection(current_vals[0] * 2);
+      backRightMotor.setSpeedDirection(current_vals[0] * 2);
     }
     else
     {
-      FrontMotors.ForwardM1(address, 0);
-      FrontMotors.BackwardM2(address, 0);
+      frontRightMotor.setSpeedDirection(0);
+      backRightMotor.setSpeedDirection(0);
     }
 }
 
 void setup() {
-  pinMode(3, OUTPUT); //pwm pin for h-bridge/solenoid
+  pinMode(solenoid_pin, OUTPUT); //pwm pin for h-bridge/solenoid
   
   Serial1.begin(9600);
   Serial.begin(9600);
 
+  //initialize the motorsset
+  frontLeftMotor.init();
+  backLeftMotor.init();
+  frontRightMotor.init();
+  frontLeftMotor.init();
+
   //init comms with motor controllers
-  FrontMotors.begin(38400);
-  BackMotors.begin(38400);
+  //FrontMotors.begin(38400);
+  //BackMotors.begin(38400);
 
   Serial.println("Starting Recieve Code");
 
@@ -175,4 +156,3 @@ void loop() {
   }
 
 }
-

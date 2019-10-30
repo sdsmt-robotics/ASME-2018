@@ -16,4 +16,7 @@ We are using the following libraries in this code
 
 ## Additional notes:
 
+Selenoid motor controller:  
+https://www.superdroidrobots.com/shop/item.aspx/pwm-motor-controller-kit-3a-12-55v-discontinued/583/
+
 * Please use good commit messages.

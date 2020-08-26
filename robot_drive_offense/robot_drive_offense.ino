@@ -10,14 +10,25 @@
 #define MS2 28
 #define EN  30
 
+//Drive motors
+/* Front:
+ *  M1 - left
+ *  M2 - right
+ *  
+ *  Back:
+ *   M1 - left
+ *   M2 - right
+ */
+
 RoboClaw FrontMotors(&Serial2, 10000);
 RoboClaw BackMotors(&Serial3, 10000);
 
-SoftwareSerial smcSerial1 = SoftwareSerial(4, 5);
-SoftwareSerial smcSerial2 = SoftwareSerial(7, 6);
+SoftwareSerial smcSerial1 = SoftwareSerial(4, 5); //right
+SoftwareSerial smcSerial2 = SoftwareSerial(7, 6); ///left
 
+//Servo controller
+//SoftwareSerial(rxPin, txPin)
 SoftwareSerial maestroSerial(10, 11);
-
 MicroMaestro maestro(maestroSerial);
 
 //Recieving byte
@@ -76,11 +87,11 @@ void check_command()
   {
     axis = incoming_command[0];
     current_vals[(axis - 97)] = map(int(incoming_command[1]), 0, 200, -127, 127);
-    Serial.print("Joystick ");
+    /*Serial.print("Joystick ");
     Serial.print(incoming_command[0], HEX);
     Serial.print(" ");
     Serial.print(map(incoming_command[1], 0, 200, -127, 127));
-    Serial.println();
+    Serial.println();*/
   }
   else if (incoming_command[0] == 69)
   {
@@ -115,8 +126,9 @@ void check_command()
     setMotorSpeed(420-10);
     shooting = true;
   }
-  else if (incoming_command[0] == 73)
+  else if (incoming_command[0] == 73) //right side, left button
   {
+    Serial.println("Toggle stepper");
     if(!stepper)
     {
       //forward
@@ -147,7 +159,7 @@ void check_command()
     setMotorSpeed(3200);
     shooting = true;
   }
-  else if (incoming_command[0] == 75)
+  else if (incoming_command[0] == 75)  //right side bottom button
   {
     if(stage2)
     {
@@ -210,11 +222,14 @@ void drive_bot()
     current_vals[3] = 0;
     current_vals[2] = current_vals[2] / 2;
   }
-  
-  front_right = current_vals[1] + current_vals[2] + current_vals[3];
-  rear_right  = current_vals[1] + current_vals[2] - current_vals[3];
-  front_left  = current_vals[1] - current_vals[2] - current_vals[3];
-  rear_left   = current_vals[1] - current_vals[2] + current_vals[3];
+
+  //current_vals[1] ---> left y  (pos=up)
+  //current_vals[2] ---> left x  (pos=left)
+  //current_vals[3] ---> right x  (pos=left)
+  front_right = current_vals[1] - current_vals[2] + current_vals[3];
+  rear_right  = -current_vals[1] - current_vals[2] - current_vals[3];
+  front_left  = current_vals[1] + current_vals[2] - current_vals[3];
+  rear_left   = -current_vals[1] + current_vals[2] + current_vals[3];
   
   front_right = constrain(front_right, -127, 127);
   rear_right  = constrain(rear_right, -127, 127);
@@ -252,7 +267,7 @@ void drive_bot()
     if(rear_left > 5)
     {
       BackMotors.ForwardM1(address, rear_left);
-  Serial.println("rear_left: " + String(rear_left));
+  //Serial.println("rear_left: " + String(rear_left));
     }
     else if(rear_left < 5)
     {
@@ -339,8 +354,8 @@ void loop() {
       }
       incoming_command[queue_len] = incomingByte;
       queue_len++;
-      Serial.print(incomingByte, HEX);
-      Serial.print(" ");
+      //Serial.print(incomingByte, HEX);
+      //Serial.print(" ");
     }
     //Serial.println(incomingByte, HEX);
   }

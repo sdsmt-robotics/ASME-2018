@@ -248,16 +248,16 @@ void controlScoop() {
     if (scoopRunning) {
       Serial.println("Setting scoop state: RUNNING");
       stepper.enable();
-  
-      // Check to makes sure good to take another step (should be fine, but better safe than sorry)
-      if (millis() - lastStep > 1) {
-        stepper.stepForward();
-        lastStep = millis();
-      }
     } else {
       Serial.println("Setting scoop state: STOPPED");
       stepper.disable();
     }
+  }
+
+  // Check to makes sure good to take another step (should be fine, but better safe than sorry)
+  if (millis() - lastStep > 1) {
+    stepper.stepForward();
+    lastStep = millis();
   }
 
 }

@@ -16,6 +16,13 @@ RoboClaw rightMotors(&Serial3, 100);
 //Shooty motors
 #define LEFT_SHOOTY_PIN 6
 #define RIGHT_SHOOTY_PIN 7
+#define STOP_SUPER_FAST_SHOOTY_PIN 52
+#define STOP_FAST_SHOOTY_PIN 53
+#define NO_SHOOTY_RESTRICT 0            //Does not restrict any speed
+#define SUPER_FAST_SHOOTY_RESTRICT 1    //Restricts "DEATH" speed only
+#define FAST_SHOOTY_RESTRICT 2          //Restricts "HIGH" and "DEATH" speeds
+
+
 //SoftwareSerial(rxPin, txPin)
 //BTS7960(rPwmPin, lPwmPin, enPin, invert)
 //BTS7960 leftShooter(4, 3, 7);
@@ -64,6 +71,8 @@ void setup() {
   configPwm();
   pinMode(RIGHT_SHOOTY_PIN, OUTPUT);
   pinMode(LEFT_SHOOTY_PIN, OUTPUT);
+  pinMode(STOP_SUPER_FAST_SHOOTY_PIN, INPUT_PULLUP);
+  pinMode(STOP_FAST_SHOOTY_PIN, INPUT_PULLUP);
 
   // Servo motors
   servoDriverSerial.begin(9600);
@@ -274,6 +283,17 @@ void controlShooter() {
   static unsigned long pressStartTime = millis(); // Time of the start of the high-speed button press
   static bool pressStarted = false;
 
+  //Defines modes to restrict "HIGH" and "DEATH" speeds depending on the setting of a switch
+  int shooterRestrictMode = 0;
+  int pinA = digitalRead(STOP_SUPER_FAST_SHOOTY_PIN);
+  int pinB = digitalRead(STOP_FAST_SHOOTY_PIN);
+  if(!pinA) {  //restricts only "DEATH" speed(kill mode)
+    shooterRestrictMode = SUPER_FAST_SHOOTY_RESTRICT;
+  } else if (!pinB) { // restricts both "HIGH" and "DEATH" speeds
+    shooterRestrictMode = FAST_SHOOTY_RESTRICT;
+  } else { //no restrictions present
+    shooterRestrictMode = NO_SHOOTY_RESTRICT;
+  }
   // Handle button presses
   if (controller.buttonClick(DOWN)) {
     Serial.println("Setting shooter speed: OFF");
@@ -284,7 +304,7 @@ void controlShooter() {
   } else if (controller.buttonClick(UP)) {
     Serial.println("Setting shooter speed: MEDIUM");
       curMode = 2;
-  } else if (controller.buttonClick(RIGHT)) {
+  } else if (controller.buttonClick(RIGHT) && shooterRestrictMode < 2) {
     if (curMode == 3 && !pressStarted) {// Start of a press to go into kill mode
       pressStartTime = millis();
       pressStarted = true;
@@ -294,7 +314,7 @@ void controlShooter() {
       pressStarted = false;
     }
     setShooterSpeed(speeds[3]); //high
-  } else if (!controller.button(RIGHT) && pressStarted && millis() - pressStartTime > killModeTime && curMode == 3) { // End of a press to go into kill mode
+  } else if (!controller.button(RIGHT) && pressStarted && millis() - pressStartTime > killModeTime && curMode == 3 && shooterRestrictMode == 0) { // End of a press to go into kill mode
     Serial.println("Setting shooter speed: DEATH");
     curMode = 4;
     pressStarted = false;
